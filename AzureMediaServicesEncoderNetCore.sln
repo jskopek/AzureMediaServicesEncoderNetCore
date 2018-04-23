@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2011
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureMediaServicesEncoderNetCore", "AzureMediaServicesEncoderNetCore\AzureMediaServicesEncoderNetCore.csproj", "{73CC0170-621F-4A8B-9F82-9B320249D752}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{73CC0170-621F-4A8B-9F82-9B320249D752}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73CC0170-621F-4A8B-9F82-9B320249D752}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73CC0170-621F-4A8B-9F82-9B320249D752}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73CC0170-621F-4A8B-9F82-9B320249D752}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DE037399-5AD8-4495-B902-017BD6A3AF7A}
+	EndGlobalSection
+EndGlobal
