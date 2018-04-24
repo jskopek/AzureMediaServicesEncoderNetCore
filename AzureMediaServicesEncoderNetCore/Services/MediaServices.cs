@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -8,6 +9,19 @@ using System.Web;
 
 namespace AzureMediaServicesEncoderNetCore.Services
 {
+    class Asset
+    {
+        public string Id { get; set; }
+        public string Uri { get; set; }
+    }
+
+    class Locator
+    {
+        public string Id { get; set; }
+        public string BaseUri { get; set; }
+        public string ContentAccessComponent { get; set; }
+    }
+
     class MediaServices
     {
         private string _tenantDomain;
@@ -43,6 +57,89 @@ namespace AzureMediaServicesEncoderNetCore.Services
 
             // set internal httpClient authorization headers to access token
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", obj["access_token"].ToString());
+        }
+
+        public async Task<Asset> GenerateAsset(string name, string storageAccountName)
+        {
+            var body = new
+            {
+                Name = name,
+                Options = 0,
+                StorageAccountName = storageAccountName
+            };
+
+            var bodyContent = JsonConvert.SerializeObject(body);
+            HttpResponseMessage response = await _httpClient.PostAsync("Assets", new StringContent(bodyContent, Encoding.UTF8, "application/json"));
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            var obj = JObject.Parse(responseContent);
+
+            return new Asset
+            {
+                Id = obj["d"]["Id"].ToString(),
+                Uri = obj["d"]["__metadata"]["uri"].ToString()
+            };
+        }
+
+        public async Task<string> GenerateAccessPolicy(string name, int durationInMinutes, int permissions)
+        {
+            // create access policy
+            var accessPolicyBody = new
+            {
+                Name = name,
+                DurationInMinutes = durationInMinutes,
+                Permissions = permissions
+            };
+
+            var bodyContent = JsonConvert.SerializeObject(accessPolicyBody);
+            HttpResponseMessage accessPolicyResponse = await _httpClient.PostAsync("AccessPolicies", new StringContent(bodyContent, Encoding.UTF8, "application/json"));
+            string responseContent = await accessPolicyResponse.Content.ReadAsStringAsync();
+
+            var obj = JObject.Parse(responseContent);
+            return obj["d"]["Id"].ToString();
+        }
+
+        public async Task<Locator> GenerateLocator(string accessPolicyId, string assetId, DateTime startTime, int type)
+        {
+            var body = new
+            {
+                AccessPolicyId = accessPolicyId,
+                AssetId = assetId,
+                StartTime = startTime,
+                Type = type
+            };
+
+            var bodyContent = JsonConvert.SerializeObject(body);
+            HttpResponseMessage response = await _httpClient.PostAsync("Locators", new StringContent(bodyContent, Encoding.UTF8, "application/json"));
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            var obj = JObject.Parse(responseContent);
+            return new Locator
+            {
+                Id = obj["d"]["Id"].ToString(),
+                BaseUri = obj["d"]["BaseUri"].ToString(),
+                ContentAccessComponent = obj["d"]["ContentAccessComponent"].ToString()
+            };
+        }
+
+        public async Task<string> UploadBlobToLocator(StreamContent stream, Locator locator, string uploadedFilename)
+        {
+            stream.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+            HttpClient httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("x-ms-blob-type", "BlockBlob");
+
+            string destinationUri = $"{locator.BaseUri}/{uploadedFilename}{locator.ContentAccessComponent}";
+
+            HttpResponseMessage httpResponseMessage = await httpClient.PutAsync(destinationUri, stream);
+            return await httpResponseMessage.Content.ReadAsStringAsync();
+        }
+
+        public async Task<string> GenerateFileInfo(string assetId)
+        {
+            HttpResponseMessage response = await _httpClient.GetAsync($"CreateFileInfos?assetid='{Uri.EscapeDataString(assetId)}'");
+            string responseContent = await response.Content.ReadAsStringAsync();
+            return responseContent;
         }
     }
 }

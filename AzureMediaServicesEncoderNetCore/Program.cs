@@ -1,5 +1,7 @@
 ﻿using AzureMediaServicesEncoderNetCore.Services;
 using System;
+using System.IO;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace AzureMediaServicesEncoderNetCore
@@ -18,6 +20,19 @@ namespace AzureMediaServicesEncoderNetCore
 
             MediaServices mediaService = new MediaServices(tenantDomain, restApiUrl, clientId, clientSecret);
             await mediaService.InitializeAccessTokenAsync();
+
+            // generate access policy, asset, and locator instances required for file upload
+            string accessPolicyId = await mediaService.GenerateAccessPolicy("TestAccessPolicy", 100, 2);
+            Asset asset = await mediaService.GenerateAsset("TestAsset", "your-azure-storage-name");
+            Locator locator = await mediaService.GenerateLocator(accessPolicyId, asset.Id, DateTime.Now.AddMinutes(-5), 1);
+
+            // generate a file stream for a video
+            FileStream fileStream = new FileStream("sample-video.mp4", FileMode.Open);
+            StreamContent content = new StreamContent(fileStream);
+
+            // upload the file to azure and generate the asset's file info
+            await mediaService.UploadBlobToLocator(content, locator, "sample-video-file.mp4");
+            await mediaService.GenerateFileInfo(asset.Id);
         }
     }
 }
