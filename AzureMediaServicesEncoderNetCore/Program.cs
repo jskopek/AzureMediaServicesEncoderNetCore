@@ -1,10 +1,12 @@
-﻿using System;
+﻿using AzureMediaServicesEncoderNetCore.Services;
+using System;
+using System.Threading.Tasks;
 
 namespace AzureMediaServicesEncoderNetCore
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             // this is a big no-no in practice! never hard-code sensitive data or commit it to a repository
             // a better approach would be to use a ConfigurationBuilder instance: 
@@ -13,6 +15,9 @@ namespace AzureMediaServicesEncoderNetCore
             string restApiUrl = "-REPLACE ME-";
             string clientId = "-REPLACE ME-";
             string clientSecret = "-REPLACE ME-";
+
+            MediaServices mediaService = new MediaServices(tenantDomain, restApiUrl, clientId, clientSecret);
+            await mediaService.InitializeAccessTokenAsync();
         }
     }
 }
