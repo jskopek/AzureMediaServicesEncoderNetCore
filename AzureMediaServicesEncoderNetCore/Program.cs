@@ -18,6 +18,7 @@ namespace AzureMediaServicesEncoderNetCore
             string clientId = "-REPLACE ME-";
             string clientSecret = "-REPLACE ME-";
 
+            // initialize media services instance
             MediaServices mediaService = new MediaServices(tenantDomain, restApiUrl, clientId, clientSecret);
             await mediaService.InitializeAccessTokenAsync();
 
@@ -33,6 +34,10 @@ namespace AzureMediaServicesEncoderNetCore
             // upload the file to azure and generate the asset's file info
             await mediaService.UploadBlobToLocator(content, locator, "sample-video-file.mp4");
             await mediaService.GenerateFileInfo(asset.Id);
+
+            // run an encoding job on the uploaded asset
+            string mediaProcessorId = await mediaService.GetMediaProcessorId("Media Encoder Standard");
+            var result = await mediaService.CreateJob("Test Encoding Job", asset.Uri, mediaProcessorId, "H264 Multiple Bitrate 720p");
         }
     }
 }

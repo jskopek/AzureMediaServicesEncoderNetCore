@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -140,6 +141,43 @@ namespace AzureMediaServicesEncoderNetCore.Services
             HttpResponseMessage response = await _httpClient.GetAsync($"CreateFileInfos?assetid='{Uri.EscapeDataString(assetId)}'");
             string responseContent = await response.Content.ReadAsStringAsync();
             return responseContent;
+        }
+
+        public async Task<string> GetMediaProcessorId(string mediaProcessorName)
+        {
+            HttpResponseMessage response = await _httpClient.GetAsync("MediaProcessors");
+            string responseContent = await response.Content.ReadAsStringAsync();
+            var obj = JObject.Parse(responseContent);
+            JToken processor = obj["d"]["results"].Where(p => (string)p["Name"] == mediaProcessorName).First();
+            return processor["Id"].ToString();
+        }
+
+        public async Task<JToken> CreateJob(string name, string inputAssetUri, string mediaProcessorId, string configuration)
+        {
+            var body = new
+            {
+                Name = name,
+                InputMediaAssets = new[] { new {
+                    __metadata = new {
+                        uri = inputAssetUri
+                    }
+                }},
+                Tasks = new[] { new {
+                    Configuration = configuration,
+                    MediaProcessorId = mediaProcessorId,
+                    TaskBody = "<?xml version=\"1.0\" encoding=\"utf-8\"?><taskBody><inputAsset>JobInputAsset(0)</inputAsset><outputAsset>JobOutputAsset(0)</outputAsset></taskBody>"
+                }}
+            };
+
+
+            var bodyContent = JsonConvert.SerializeObject(body);
+            var stringContent = new StringContent(bodyContent, Encoding.UTF8, "application/json");
+            stringContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json;odata=verbose");
+            HttpResponseMessage response = await _httpClient.PostAsync("Jobs", stringContent);
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            var obj = JObject.Parse(responseContent);
+            return obj["d"];
         }
     }
 }
